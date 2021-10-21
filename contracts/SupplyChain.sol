@@ -2,10 +2,10 @@
 pragma solidity >=0.5.16 <0.9.0;
 
 
-import "https://github.com/ConsenSys-Academy-Github-Classroom/supply-chain-exercise-marcg313/tree/master/test/ConsumerRole.sol";
-import "https://github.com/ConsenSys-Academy-Github-Classroom/supply-chain-exercise-marcg313/tree/master/test/DistributorRole.sol";
-import "https://github.com/ConsenSys-Academy-Github-Classroom/supply-chain-exercise-marcg313/tree/master/test/FarmerRole.sol";
-import "https://github.com/ConsenSys-Academy-Github-Classroom/supply-chain-exercise-marcg313/tree/master/test/RetailerRole.sol";
+import "https://github.com/ireade/nd1309-supply-chain/blob/master/contracts/coffeeaccesscontrol/ConsumerRole.sol";
+import "https://github.com/ireade/nd1309-supply-chain/blob/master/contracts/coffeeaccesscontrol/DistributorRole.sol";
+import "https://github.com/ireade/nd1309-supply-chain/blob/master/contracts/coffeeaccesscontrol/FarmerRole.sol";
+import "https://github.com/ireade/nd1309-supply-chain/blob/master/contracts/coffeeaccesscontrol/RetailerRole.sol";
 
 contract SupplyChain is ConsumerRole, DistributorRole, FarmerRole, RetailerRole {
 
