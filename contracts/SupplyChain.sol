@@ -3,131 +3,143 @@ pragma solidity >=0.5.16 <0.9.0;
 
 contract SupplyChain {
 
-  // <owner>
+  address contractOwner;
 
-  // <skuCount>
+  uint  sku;
 
-  // <items mapping>
+  mapping(uint => Item) items; // (upc => Item)
 
-  // <enum State: ForSale, Sold, Shipped, Received>
+  enum State
+    {
+        ForSale, // 0
+        Sold, // 1
+        Shipped, // 2
+        Received // 3
+    }
 
-  // <struct Item: name, sku, price, state, seller, and buyer>
+  struct Item {
+	string name; // Name
+	uint sku;  // SKU
+ 	uint price; // Price
+	State state;  // State
+	address seller;  // Seller
+	address buyer;  // Buyer
+    }
   
-  /* 
-   * Events
-   */
-
-  // <LogForSale event: sku arg>
-
-  // <LogSold event: sku arg>
-
-  // <LogShipped event: sku arg>
-
-  // <LogReceived event: sku arg>
+    event ForSale(uint sku);
+    event Sold(uint sku);
+    event Shipped(uint sku);
+    event Received(uint sku);
 
 
   /* 
    * Modifiers
    */
 
-  // Create a modifer, `isOwner` that checks if the msg.sender is the owner of the contract
+  modifier isOwner() {
+        require(msg.sender == contractOwner, "Only the owner can perform this operation");
+        _;
+    }
 
-  // <modifier: isOwner
+   modifier verifyCaller (address _address) {
+        require(msg.sender == _address);
+        _;
+    }
 
-  modifier verifyCaller (address _address) { 
-    // require (msg.sender == _address); 
-    _;
-  }
-
-  modifier paidEnough(uint _price) { 
-    // require(msg.value >= _price); 
-    _;
-  }
+   modifier paidEnough(uint _price) {
+        require(msg.value >= _price, "Not enough was paid for the item");
+        _;
+    }
 
   modifier checkValue(uint _sku) {
-    //refund them after pay for item (why it is before, _ checks for logic before func)
-    _;
-    // uint _price = items[_sku].price;
-    // uint amountToRefund = msg.value - _price;
-    // items[_sku].buyer.transfer(amountToRefund);
+        _;
+        uint _price = items[_sku].price;
+        uint amountToReturn = msg.value - _price;
+
+        address payable consumerAddressPayable = _make_payable(items[_sku].consumerID);
+        consumerAddressPayable.transfer(amountToReturn);
+    }
+
+
+ modifier forSale(uint _sku) {
+        require(items[_sku].itemState == State.ForSale, "The item is not yet for sale");
+        _;
+    }
+  
+modifier sold(uint _sku) {
+        require(items[_sku].itemState == State.Sold, "The item is not yet sold");
+        _;
+    }
+
+  modifier shipped(uint _sku) {
+        require(items[_sku].itemState == State.Shipped, "The item is not yet shipped");
+        _;
+    }
+
+ modifier received(uint _sku) {
+        require(items[_sku].itemState == State.Received, "The item is not yet received");
+        _;
+    }
+
+ constructor() public payable {
+        contractOwner = msg.sender;
+        sku = 1;
+    }
+    
+    
+
+  function ForSaleItem(
+        uint _sku,
+        address _buyer,
+          string memory _name,
+        string memory _productNotes) public isOwner
+    {
+        items[_sku] = Item({
+		sku: _sku;
+		name: _name;
+		price: uint(0),
+		state: State.ForSale;
+		seller: msg.sender;
+		buyer: address(0) 
+            });
+
+        sku = sku + 1;
+ emit LogForSale(sku);
+    return true;
   }
 
-  // For each of the following modifiers, use what you learned about modifiers
-  // to give them functionality. For example, the forSale modifier should
-  // require that the item with the given sku has the state ForSale. Note that
-  // the uninitialized Item.State is 0, which is also the index of the ForSale
-  // value, so checking that Item.State == ForSale is not sufficient to check
-  // that an Item is for sale. Hint: What item properties will be non-zero when
-  // an Item has been added?
 
-  // modifier forSale
-  // modifier sold(uint _sku) 
-  // modifier shipped(uint _sku) 
-  // modifier received(uint _sku) 
 
-  constructor() public {
-    // 1. Set the owner to the transaction sender
-    // 2. Initialize the sku count to 0. Question, is this necessary?
-  }
+function sellItem(uint _sku, uint _price) public isOwner (_sku)
+    {
+        items[_sku].itemState = State.ForSale;
+        items[_sku].Price = _price;
+        emit ForSale(_sku);
+    }
 
-  function addItem(string memory _name, uint _price) public returns (bool) {
-    // 1. Create a new item and put in array
-    // 2. Increment the skuCount by one
-    // 3. Emit the appropriate event
-    // 4. return true
+    function buyItem(uint _sku) public payable isOwner forSale(_sku) paidEnough(items[_sku].Price)
+    {
+        items[_sku].ownerID = contractOwner;
+        items[_sku].distributorID = msg.sender;
+        items[_sku].State = State.Sold;
 
-    // hint:
-    // items[skuCount] = Item({
-    //  name: _name, 
-    //  sku: skuCount, 
-    //  price: _price, 
-    //  state: State.ForSale, 
-    //  seller: msg.sender, 
-    //  buyer: address(0)
-    //});
-    //
-    //skuCount = skuCount + 1;
-    // emit LogForSale(skuCount);
-    // return true;
-  }
+        address payable consumerAddressPayable = _make_payable(items[_sku].sondumerID);
+        consumerAddressPayable.transfer(msg.value);
+        
 
-  // Implement this buyItem function. 
-  // 1. it should be payable in order to receive refunds
-  // 2. this should transfer money to the seller, 
-  // 3. set the buyer as the person who called this transaction, 
-  // 4. set the state to Sold. 
-  // 5. this function should use 3 modifiers to check 
-  //    - if the item is for sale, 
-  //    - if the buyer paid enough, 
-  //    - check the value after the function is called to make 
-  //      sure the buyer is refunded any excess ether sent. 
-  // 6. call the event associated with this function!
-  function buyItem(uint sku) public {}
+        emit Sold(_sku);
+    }
 
-  // 1. Add modifiers to check:
-  //    - the item is sold already 
-  //    - the person calling this function is the seller. 
-  // 2. Change the state of the item to shipped. 
-  // 3. call the event associated with this function!
-  function shipItem(uint sku) public {}
+    function soldItem(uint _sku) public isOwner sold(_sku)
+    {
+        items[_sku].itemState = State.Shipped;
+        emit Shipped(_sku);
+    }
+    
+     function shipItem(uint _sku) public isOwner shipped(_sku)
+    {
+        items[_sku].itemState = State.Shipped;
+        emit Shipped(_sku);
+    }
 
-  // 1. Add modifiers to check 
-  //    - the item is shipped already 
-  //    - the person calling this function is the buyer. 
-  // 2. Change the state of the item to received. 
-  // 3. Call the event associated with this function!
-  function receiveItem(uint sku) public {}
-
-  // Uncomment the following code block. it is needed to run tests
-  /* function fetchItem(uint _sku) public view */ 
-  /*   returns (string memory name, uint sku, uint price, uint state, address seller, address buyer) */ 
-  /* { */
-  /*   name = items[_sku].name; */
-  /*   sku = items[_sku].sku; */
-  /*   price = items[_sku].price; */
-  /*   state = uint(items[_sku].state); */
-  /*   seller = items[_sku].seller; */
-  /*   buyer = items[_sku].buyer; */
-  /*   return (name, sku, price, state, seller, buyer); */
-  /* } */
 }
