@@ -19,17 +19,17 @@ contract SupplyChain {
 
   struct Item {
 	string name; // Name
-	uint sku;  // SKU
+	uint skuCount;  // SKU
  	uint price; // Price
 	State state;  // State
 	address seller;  // Seller
 	address buyer;  // Buyer
     }
   
-    event ForSale(uint sku);
-    event Sold(uint sku);
-    event Shipped(uint sku);
-    event Received(uint sku);
+    event ForSale(uint skuCount);
+    event Sold(uint skuCount);
+    event Shipped(uint skuCount);
+    event Received(uint skuCount);
 
 
   /* 
@@ -51,33 +51,33 @@ contract SupplyChain {
         _;
     }
 
-  modifier checkValue(uint _sku) {
+  modifier checkValue(uint _skuCount) {
         _;
-        uint _price = items[_sku].price;
+        uint _price = items[_skuCount].price;
         uint amountToReturn = msg.value - _price;
 
-        address payable consumerAddressPayable = _make_payable(items[_sku].consumerID);
+        address payable consumerAddressPayable = _make_payable(items[_skuCount].consumerID);
         consumerAddressPayable.transfer(amountToReturn);
     }
 
 
- modifier forSale(uint _sku) {
-        require(items[_sku].itemState == State.ForSale, "The item is not yet for sale");
+ modifier forSale(uint _skuCount) {
+        require(items[_skuCount].itemState == State.ForSale, "The item is not yet for sale");
         _;
     }
   
-modifier sold(uint _sku) {
-        require(items[_sku].itemState == State.Sold, "The item is not yet sold");
+modifier sold(uint _skuCount) {
+        require(items[_skuCount].itemState == State.Sold, "The item is not yet sold");
         _;
     }
 
-  modifier shipped(uint _sku) {
+  modifier shipped(uint _skuCount) {
         require(items[_sku].itemState == State.Shipped, "The item is not yet shipped");
         _;
     }
 
- modifier received(uint _sku) {
-        require(items[_sku].itemState == State.Received, "The item is not yet received");
+ modifier received(uint _skuCount) {
+        require(items[_skuCount].itemState == State.Received, "The item is not yet received");
         _;
     }
 
@@ -89,13 +89,13 @@ modifier sold(uint _sku) {
     
 
   function ForSaleItem(
-        uint _sku,
+        uint _skuCount,
         address _buyer,
           string memory _name,
         string memory _productNotes) public isOwner
     {
-        items[_sku] = Item({
-		sku: _sku;
+        items[_skuCount] = Item({
+		sku: _skuCount;
 		name: _name;
 		price: uint(0),
 		state: State.ForSale;
@@ -110,36 +110,36 @@ modifier sold(uint _sku) {
 
 
 
-function sellItem(uint _sku, uint _price) public isOwner (_sku)
+function sellItem(uint _skuCount, uint _price) public isOwner (_skuCount)
     {
-        items[_sku].itemState = State.ForSale;
-        items[_sku].Price = _price;
-        emit ForSale(_sku);
+        items[_skuCount].itemState = State.ForSale;
+        items[_skuCount].Price = _price;
+        emit ForSale(_skuCount);
     }
 
-    function buyItem(uint _sku) public payable isOwner forSale(_sku) paidEnough(items[_sku].Price)
+    function buyItem(uint _skuCount) public payable isOwner forSale(_skuCount) paidEnough(items[_sku].Price)
     {
-        items[_sku].ownerID = contractOwner;
-        items[_sku].distributorID = msg.sender;
-        items[_sku].State = State.Sold;
+        items[_skuCount].ownerID = contractOwner;
+        items[_skuCount].distributorID = msg.sender;
+        items[_skuCount].State = State.Sold;
 
-        address payable consumerAddressPayable = _make_payable(items[_sku].sondumerID);
+        address payable consumerAddressPayable = _make_payable(items[_skuCount].sondumerID);
         consumerAddressPayable.transfer(msg.value);
         
 
-        emit Sold(_sku);
+        emit Sold(_skuCount);
     }
 
-    function soldItem(uint _sku) public isOwner sold(_sku)
+    function soldItem(uint _skuCount) public isOwner sold(_skuCount)
     {
-        items[_sku].itemState = State.Shipped;
-        emit Shipped(_sku);
+        items[_skuCount].itemState = State.Shipped;
+        emit Shipped(_skuCount);
     }
     
-     function shipItem(uint _sku) public isOwner shipped(_sku)
+     function shipItem(uint _skuCount) public isOwner shipped(_skuCount)
     {
-        items[_sku].itemState = State.Shipped;
-        emit Shipped(_sku);
+        items[_skuCount].itemState = State.Shipped;
+        emit Shipped(_skuCount);
     }
 
 }
