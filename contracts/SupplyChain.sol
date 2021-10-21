@@ -83,8 +83,6 @@ contract SupplyChain is ConsumerRole, DistributorRole, FarmerRole, RetailerRole 
         uint _price = items[_upc].productPrice;
         uint amountToReturn = msg.value - _price;
 
-        address payable consumerAddressPayable = _make_payable(items[_upc].consumerID);
-        consumerAddressPayable.transfer(amountToReturn);
     }
 
     modifier harvested(uint _upc) {
@@ -136,16 +134,7 @@ contract SupplyChain is ConsumerRole, DistributorRole, FarmerRole, RetailerRole 
         upc = 1;
     }
 
-    function kill() public {
-        if (msg.sender == contractOwner) {
-            address payable ownerAddressPayable = _make_payable(contractOwner);
-            selfdestruct(ownerAddressPayable);
-        }
-    }
-
-    function _make_payable(address x) internal pure returns (address payable) {
-        return address(uint160(x));
-    }
+    
 
     /* Functions ************************ */
 
@@ -206,8 +195,7 @@ contract SupplyChain is ConsumerRole, DistributorRole, FarmerRole, RetailerRole 
         items[_upc].distributorID = msg.sender;
         items[_upc].itemState = State.Sold;
 
-        address payable originFarmerAddressPayable = _make_payable(items[_upc].originFarmerID);
-        originFarmerAddressPayable.transfer(msg.value);
+     
 
         emit Sold(_upc);
     }
@@ -304,3 +292,4 @@ contract SupplyChain is ConsumerRole, DistributorRole, FarmerRole, RetailerRole 
         consumerID
         );
     }
+}
